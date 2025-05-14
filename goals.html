@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Goals</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>Student Goals</h1>
+
+  <label for="yearSelect">Select Year:</label>
+  <select id="yearSelect" onchange="loadData()">
+    <option value="2023_2024" selected>2023-2024</option>
+    <option value="2022_2023">2022-2023</option>
+    <option value="2021_2022">2021-2022</option>
+    <option value="2020_2021">2020-2021</option>
+    <option value="2019_2020">2019-2020</option>
+    <option value="2018_2019">2018-2019</option>
+    <option value="2017_2018">2017-2018</option>
+  </select>
+
+  <label for="schoolSelect">Select School:</label>
+  <select id="schoolSelect" onchange="updateCharts()">
+    <option value="all">All Schools</option>
+  </select>
+
+  <label for="chartTypeSelect">Chart Type:</label>
+  <select id="chartTypeSelect" onchange="updateCharts()">
+    <option value="pie" selected>Pie Chart</option>
+    <option value="bar">Bar Chart</option>
+  </select>
+
+  <div id="attendance-chart"></div>
+  <div id="behavior-chart"></div>
+  <div id="academics-chart"></div>
+  <div id="sel-chart"></div>
+  <div id="high-risk-behavior-chart"></div>
+  <div id="college-readiness-chart"></div>
+  <div id="career-readiness-chart"></div>
+
+  <script>
+
+    const csvUrls = {
+      "2023_2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022_2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021_2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020_2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019_2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018_2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017_2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv'
+    };
+
+    let data = [];
+
+    function loadData() {
+      const selectedYear = document.getElementById('yearSelect').value;
+      const csvUrl = csvUrls[selectedYear];
+
+      console.log("Fetching CSV from:", csvUrl);
+
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data;
+          console.log("Parsed data:", data);
+          populateSchoolDropdown();
+          updateCharts();
+        },
+        error: function(err) {
+          console.error("Failed to load CSV:", err);
+          alert("Failed to load data for " + selectedYear);
+        }
+      });
+    }
+
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+
+      const schools = Array.from(new Set(data.map(item => item['School Name'])));
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    function updateCharts() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const chartType = document.getElementById('chartTypeSelect').value;
+
+      const filteredData = selectedSchool === 'all'
+        ? data
+        : data.filter(item => item['School Name'] === selectedSchool);
+
+      // Define the categories
+      const categories = [
+        'Attendance', 'Behavior', 'Academics', 'SEL', 'High Risk Behavior', 'College Readiness', 'Career Readiness'
+      ];
+
+      categories.forEach(category => {
+        // Get column names for each scenario
+        const goalColumn = `${category}: CM students w/ goal`;
+        const metGoalColumn = `${category}: CM students met goal`;
+        const notMetWithProgressColumn = `${category}: CM students not met, with progress`;
+        const notMetNoProgressColumn = `${category}: CM students not met, no progress`;
+        
+        // Calculate percentages for each scenario
+        const metGoal = filteredData.filter(item => item[metGoalColumn]).length;
+        const notMetWithProgress = filteredData.filter(item => item[notMetWithProgressColumn]).length;
+        const notMetNoProgress = filteredData.filter(item => item[notMetNoProgressColumn]).length;
+        const totalWithGoal = filteredData.filter(item => item[goalColumn]).length;
+
+        const percentages = {
+          'Met Goal': (metGoal / totalWithGoal) * 100,
+          'Not Met Goal, With Progress': (notMetWithProgress / totalWithGoal) * 100,
+          'Not Met Goal, No Progress': (notMetNoProgress / totalWithGoal) * 100
+        };
+
+        // Create pie or bar charts based on selected chart type
+        const chartData = (chartType === 'pie')
+          ? [{
+              labels: Object.keys(percentages),
+              values: Object.values(percentages),
+              type: 'pie'
+            }]
+          : [{
+              x: Object.keys(percentages),
+              y: Object.values(percentages),
+              type: 'bar'
+            }];
+
+        // Plot the chart
+        Plotly.newPlot(`${category.toLowerCase().replace(/ /g, '-')}-chart`, chartData, {
+          title: `${category} Goal Met Percentages`,
+          xaxis: { title: 'Goal Met Categories' },
+          yaxis: { title: 'Percentage' }
+        });
+      });
+    }
+
+    // Load initial dataset
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Attributes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, th, td {
+      border: 1px solid black;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Student Attributes</h1>
+
+  <label for="schoolSelect">Select School:</label>
+  <select id="schoolSelect" onchange="updateTable()">
+    <option value="all">All Schools</option>
+  </select>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>2017-2018</th>
+        <th>2018-2019</th>
+        <th>2019-2020</th>
+        <th>2020-2021</th>
+        <th>2021-2022</th>
+        <th>2022-2023</th>
+        <th>2023-2024</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Data will be populated here dynamically -->
+    </tbody>
+  </table>
+
+  <script>
+    const csvUrls = {
+      "2023-2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022-2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021-2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020-2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019-2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018-2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017-2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv'
+    };
+
+    let allData = [];
+
+    // Load all CSV files
+    function loadAllCSVs() {
+      const filePromises = Object.entries(csvUrls).map(([yearKey, url]) =>
+        new Promise((resolve, reject) => {
+          Papa.parse(url, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+              const cleaned = results.data.map(row => {
+                const newRow = {};
+                for (let key in row) {
+                  const cleanKey = key.trim().replace(/\s+/g, ' '); // Clean column names
+                  newRow[cleanKey] = row[key];
+                }
+
+                // Normalize year
+                let rawYear = newRow['Reporting Year'] || '';
+                rawYear = rawYear.toString().trim();
+                const normalizedYear = rawYear.replace(/(\d{4})\/(\d{4})\s*SY/i, '$1-$2');
+                newRow['Reporting Year'] = normalizedYear;
+
+                return newRow;
+              });
+
+              resolve(cleaned);  // Resolve after processing all rows
+            },
+            error: reject
+          });
+        })
+      );
+
+      Promise.all(filePromises).then(results => {
+        allData = results.flat(); // Flatten all results
+        populateSchoolDropdown();
+        updateTable();
+      }).catch(err => {
+        console.error("Error loading one or more CSVs:", err);
+        alert("Failed to load some data.");
+      });
+    }
+
+    // Populate the school dropdown
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+      const schools = Array.from(new Set(allData.map(d => d['School Name'])));
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    // Update the table based on selected school
+    function updateTable() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const filtered = selectedSchool === 'all'
+        ? allData
+        : allData.filter(row => row['School Name'] === selectedSchool);
+
+      const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+      tableBody.innerHTML = '';
+
+      // Categories to focus on (based on your original list)
+      const categories = [
+        'Child of military',
+        'ELL',
+        'Exposed to Trauma',
+        'Foster care/Group home',
+        'Gang Involvement',
+        'Homeless',
+        'Incarcerated parent',
+        'LGBTQ+',
+        'Over age/Under credit',
+        'Pregnant/ Parenting',
+        'Special Education',
+        'Substance abuse',
+        'Adj Youth'  // Added 'Adj Youth' category
+      ];
+
+      // List of years
+      const years = ['2017-2018', '2018-2019', '2019-2020', '2020-2021', '2021-2022', '2022-2023', '2023-2024'];
+
+      // Iterate through each category and create a table row
+      categories.forEach(category => {
+        const totalColumn = `${category} - Yes`.trim().replace(/\s+/g, ' ');
+
+        // Create a row for each category
+        const row = tableBody.insertRow();
+        row.insertCell(0).textContent = category;
+
+        // Iterate through each year
+        years.forEach(year => {
+          const yearData = filtered.filter(row => row['Reporting Year'] === year);
+          
+          // Calculate the total number for the current year and category
+          const total = yearData.reduce((sum, row) => {
+            const val = parseFloat(row[totalColumn]);
+            return sum + (isNaN(val) ? 0 : val);
+          }, 0);
+          
+          // Add the calculated total to the table cell
+          row.insertCell(-1).textContent = total > 0 ? total : 0;
+        });
+      });
+    }
+
+    loadAllCSVs(); // Load all CSV files on page load
+  </script>
+</body>
+</html>
