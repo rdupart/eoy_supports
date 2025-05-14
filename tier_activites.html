@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Support Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script> <!-- For parsing CSV -->
+</head>
+<body>
+  <h1>Student Support Dashboard</h1>
+
+  <label for="yearSelect">Select Year:</label>
+  <select id="yearSelect" onchange="loadData()">
+    <option value="2023_2024" selected>2023-2024</option>
+    <option value="2022_2023">2022-2023</option>
+    <option value="2021_2022">2021-2022</option>
+    <option value="2020_2021">2020-2021</option>
+    <option value="2019_2020">2019-2020</option>
+    <option value="2018_2019">2018-2019</option>
+    <option value="2017_2018">2017-2018</option>
+    <option value="2016_2017">2016-2017</option>
+    <option value="2015_2016">2015-2016</option>
+  </select>
+
+
+
+  <!-- Dropdown menu for selecting school -->
+  <label for="schoolSelect">Select School:</label>
+  <select id="schoolSelect" onchange="updateCategoryDropdowns()">
+    <option value="all">All Schools</option>
+    <!-- Dynamic options will be populated here -->
+  </select>
+
+  <!-- Dropdown menu for selecting chart type -->
+  <label for="chartTypeSelect">Chart Type:</label>
+  <select id="chartTypeSelect" onchange="updateCharts()">
+    <option value="pie" selected>Pie Chart</option>
+    <option value="bar">Bar Chart</option>
+  </select>
+
+  <br><br>
+
+  <!-- Dropdown menu for selecting support category -->
+  <label for="supportCategorySelect">Select Support Category:</label>
+  <select id="supportCategorySelect" onchange="updateCharts()">
+    <option value="all">All Categories</option>
+    <!-- Dynamic options will be populated here -->
+  </select>
+
+  <!-- Chart containers -->
+  <div id="support-chart"></div>
+  <div id="activity-report"></div> <!-- Will now be Pie Chart for Activity -->
+  <div id="yearly-trend"></div>
+  <div id="combined-bar-chart"></div> <!-- Combined chart for Tier II and Tier III -->
+
+  <script>
+    const csvUrls = {
+      "2023_2024": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2023_2024.csv',
+      "2022_2023": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2022_2023.csv',
+      "2021_2022": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2021_2022.csv',
+      "2020_2021": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2020_2021.csv',
+      "2019_2020": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2019_2020.csv',
+      "2018_2019": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2018_2019.csv',
+      "2017_2018": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2017_2018.csv',
+      "2016_2017": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2016_2017.csv',
+      "2015_2016": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2015_2016.csv'
+    };
+
+    let data = [];
+
+    function loadData() {
+      const yearSelect = document.getElementById('yearSelect');
+      const selectedYear = yearSelect.value; // Get selected year
+
+      fetchCSV(selectedYear); // Fetch data for selected year
+    }
+
+    // Fetch CSV based on the year
+    function fetchCSV(selectedYear) {
+      const csvUrl = csvUrls[selectedYear];
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data; // Store data in the variable
+          populateSchoolDropdown();
+          updateCategoryDropdowns(); // Update categories dropdown
+        }
+      });
+    }
+
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+
+      const schools = Array.from(new Set(data.map(d => d['School Where Support Was Provided']))).filter(Boolean).sort();
+      schools.forEach(school => {
+        const opt = document.createElement('option');
+        opt.value = school;
+        opt.textContent = school;
+        schoolSelect.appendChild(opt);
+      });
+    }
+
+    function updateCategoryDropdowns() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const filteredData = selectedSchool === 'all' ? data : data.filter(d => d['School Where Support Was Provided'] === selectedSchool);
+
+      const supportCategories = Array.from(new Set(filteredData.map(d => d['Student Support Category']))).filter(Boolean).sort();
+
+      const supportSelect = document.getElementById('supportCategorySelect');
+      supportSelect.innerHTML = '<option value="all">All Categories</option>';
+
+      supportCategories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        supportSelect.appendChild(opt);
+      });
+
+      updateCharts();
+    }
+
+    function updateCharts() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const chartType = document.getElementById('chartTypeSelect').value;
+      const selectedSupportCategory = document.getElementById('supportCategorySelect').value;
+
+      const filteredData = selectedSchool === 'all' ? data : data.filter(d => d['School Where Support Was Provided'] === selectedSchool);
+
+      const supportCounts = {};
+      const activityCounts = {};
+
+      filteredData.forEach(item => {
+        const supportCategory = item['Student Support Category'];
+        const supportName = item['Student Support Name'];
+        const activity = item['Activity'];
+
+        if (!supportCategory || !supportName) return;
+
+        if (selectedSupportCategory === 'all' || supportCategory === selectedSupportCategory) {
+          supportCounts[supportName] = (supportCounts[supportName] || 0) + item['# of Tier II Supports'] + item['# of Tier III Supports'];
+
+          if (activity) {
+            activityCounts[activity] = (activityCounts[activity] || 0) + 1;
+          }
+        }
+      });
+
+      const supportNames = Object.keys(supportCounts);
+      const supportValues = Object.values(supportCounts);
+
+      if (selectedSchool === 'all') {
+        // Show "All Schools" report only when "All Schools" is selected
+        const reportDiv = document.getElementById('support-chart');
+        reportDiv.innerHTML = `<h3>All Schools Report:</h3><ul>` +
+          supportNames.map((name, i) => `<li>${name}: ${supportValues[i]} hours</li>`).join('') +
+          `</ul>`;
+
+        // Yearly trend graph for "All Schools"
+        const yearlyCounts = {};
+        data.forEach(d => {
+          const year = d['School Year'];
+          if (!year) return;
+          yearlyCounts[year] = (yearlyCounts[year] || 0) + 1;
+        });
+
+        const years = Object.keys(yearlyCounts).sort();
+        const counts = years.map(y => yearlyCounts[y]);
+
+        Plotly.newPlot('yearly-trend', [{
+          x: years,
+          y: counts,
+          type: 'scatter',
+          mode: 'lines+markers'
+        }], { title: 'Supports Over the Years' });
+
+        // Hide other charts when "All Schools" is selected
+        document.getElementById('support-chart').style.display = 'block';
+        document.getElementById('activity-report').innerHTML = '';
+        document.getElementById('combined-bar-chart').innerHTML = '';
+      } else {
+        // Hide "All Schools" report when a specific school is selected
+        document.getElementById('support-chart').style.display = 'none';
+
+        // Chart rendering for specific school
+        const chartData = chartType === 'pie'
+          ? [{ labels: supportNames, values: supportValues, type: 'pie', textinfo: 'label+value' }]
+          : [{ x: supportNames, y: supportValues, type: 'bar' }];
+
+        Plotly.newPlot('support-chart', chartData, { title: `${selectedSchool} Student Supports`, margin: { t: 50, b: 30 } });
+
+        // Pie chart for activities
+        const activityNames = Object.keys(activityCounts);
+        const activityValues = Object.values(activityCounts);
+
+        const activityPieData = [{
+          labels: activityNames,
+          values: activityValues,
+          type: 'pie',
+          textinfo: 'label+value'
+        }];
+
+        const activityLayout = {
+          title: `${selectedSchool} Activity Report`
+        };
+
+        Plotly.newPlot('activity-report', activityPieData, activityLayout);
+
+        document.getElementById('yearly-trend').innerHTML = '';
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chart from CSV Data</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+</head>
+<body>
+  <h1>Student Supports Dashboard</h1>
+
+  <label for="yearSelect">Select Year:</label>
+  <select id="yearSelect" onchange="loadData()">
+    <option value="2023_2024" selected>2023-2024</option>
+    <option value="2022_2023">2022-2023</option>
+    <option value="2021_2022">2021-2022</option>
+    <option value="2020_2021">2020-2021</option>
+    <option value="2019_2020">2019-2020</option>
+    <option value="2018_2019">2018-2019</option>
+    <option value="2017_2018">2017-2018</option>
+    <option value="2016_2017">2016-2017</option>
+    <option value="2015_2016">2015-2016</option>
+  </select>
+
+  <label for="schoolSelect">Select School:</label>
+  <select id="schoolSelect" onchange="updateCharts()">
+    <option value="all">All Schools</option>
+  </select>
+
+  <label for="chartTypeSelect">Chart Type:</label>
+  <select id="chartTypeSelect" onchange="updateCharts()">
+    <option value="pie" selected>Pie Chart</option>
+    <option value="bar">Bar Chart</option>
+  </select>
+
+  <div id="tier2-chart"></div>
+  <div id="tier3-chart"></div>
+  <div id="combined-chart"></div>
+
+
+  <script>
+
+    const csvUrls = {
+      "2023_2024": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2023_2024.csv',
+      "2022_2023": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2022_2023.csv',
+      "2021_2022": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2021_2022.csv',
+      "2020_2021": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2020_2021.csv',
+      "2019_2020": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2019_2020.csv',
+      "2018_2019": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2018_2019.csv',
+      "2017_2018": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2017_2018.csv',
+      "2016_2017": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2016_2017.csv',
+      "2015_2016": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2015_2016.csv'
+    };
+    let data = [];
+
+    function loadData() {
+      const selectedYear = document.getElementById('yearSelect').value;
+      const csvUrl = csvUrls[selectedYear];
+
+      console.log("Fetching CSV from:", csvUrl);
+
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data;
+          console.log("Parsed data:", data);
+          populateSchoolDropdown();
+          updateCharts();
+        },
+        error: function(err) {
+          console.error("Failed to load CSV:", err);
+          alert("Failed to load data for " + selectedYear);
+        }
+      });
+    }
+
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+
+      const schools = Array.from(new Set(data.map(item => item['School Where Support Was Provided']))).filter(s => s);
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    function updateCharts() {
+    const selectedSchool = document.getElementById('schoolSelect').value;
+    const chartType = document.getElementById('chartTypeSelect').value;
+
+    const filteredData = selectedSchool === 'all'
+      ? data
+      : data.filter(item => item['School Where Support Was Provided'] === selectedSchool);
+
+    const categoryMap = {};
+    filteredData.forEach(item => {
+      const category = item['Student Support Category'];
+      if (!category) return;
+      if (!categoryMap[category]) categoryMap[category] = { tier2: 0, tier3: 0 };
+      categoryMap[category].tier2 += item['# of Tier II Supports'] || 0;
+      categoryMap[category].tier3 += item['# of Tier III Supports'] || 0;
+    });
+
+    const categories = Object.keys(categoryMap);
+    const tier2Supports = categories.map(cat => categoryMap[cat].tier2);
+    const tier3Supports = categories.map(cat => categoryMap[cat].tier3);
+    const combinedSupports = categories.map((cat, i) => tier2Supports[i] + tier3Supports[i]);
+
+    // Tier 2 Chart
+    const tier2Data = (chartType === 'pie')
+      ? [{
+          labels: categories,
+          values: tier2Supports,
+          type: 'pie',
+          textinfo: 'label+value',
+          texttemplate: '%{label}: %{value} hrs'
+        }]
+      : [{
+          x: categories,
+          y: tier2Supports,
+          type: 'bar'
+        }];
+
+    Plotly.newPlot('tier2-chart', tier2Data, {
+      title: `Tier II Supports (${chartType === 'pie' ? 'Pie' : 'Bar'} Chart)`,
+      xaxis: { title: 'Category' },
+      yaxis: { title: 'Supports' }
+    });
+
+    // Tier 3 Chart
+    const tier3Data = (chartType === 'pie')
+      ? [{
+          labels: categories,
+          values: tier3Supports,
+          type: 'pie',
+          textinfo: 'label+value',
+          texttemplate: '%{label}: %{value} hrs'
+        }]
+      : [{
+          x: categories,
+          y: tier3Supports,
+          type: 'bar'
+        }];
+
+    Plotly.newPlot('tier3-chart', tier3Data, {
+      title: `Tier III Supports (${chartType === 'pie' ? 'Pie' : 'Bar'} Chart)`,
+      xaxis: { title: 'Category' },
+      yaxis: { title: 'Supports' }
+    });
+
+    // Combined Chart
+    const combinedData = (chartType === 'pie')
+      ? [{
+          labels: categories,
+          values: combinedSupports,
+          type: 'pie',
+          textinfo: 'label+value',
+          texttemplate: '%{label}: %{value} hrs'
+        }]
+      : [{
+          x: categories,
+          y: combinedSupports,
+          type: 'bar'
+        }];
+
+    Plotly.newPlot('combined-chart', combinedData, {
+      title: `Combined Tier II & III Supports (${chartType === 'pie' ? 'Pie' : 'Bar'} Chart)`,
+      xaxis: { title: 'Category' },
+      yaxis: { title: 'Supports' }
+    });
+  }
+
+
+    // Load initial dataset
+    loadData();
+  </script>
+</body>
+</html>

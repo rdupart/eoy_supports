@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Services Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .metrics-row {
+      display: flex;
+      gap: 20px;
+      justify-content: space-around;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      flex: 1;
+      min-width: 150px;
+      text-align: center;
+    }
+
+    .card h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #777;
+    }
+
+    .card p {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .chart-section {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      flex: 1;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eee;
+    }
+
+    #dataTable {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Student Services Dashboard</h1>
+
+  <div class="controls">
+    <select id="schoolSelect" onchange="updateDashboard()">
+      <option value="all">All Schools</option>
+    </select>
+
+    <select id="yearSelect" onchange="updateDashboard()">
+      <option value="2023-2024">2023-2024</option>
+      <option value="2022-2023">2022-2023</option>
+      <option value="2021-2022">2021-2022</option>
+      <option value="2020-2021">2020-2021</option>
+      <option value="2019-2020">2019-2020</option>
+      <option value="2018-2019">2018-2019</option>
+      <option value="2017-2018">2017-2018</option>
+    </select>
+  </div>
+
+  <div class="metrics-row">
+    <div class="card"><h3>Student Enrollment</h3><p id="enrollment">-</p></div>
+    <div class="card"><h3>Total Students Served</h3><p id="served">-</p></div>
+    <div class="card"><h3>Parents Engaged</h3><p id="parents">-</p></div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-card">
+      <h3>Student Support Distribution</h3>
+      <div id="supportPie"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Parents Engaged Over Time</h3>
+      <div id="parentTrend"></div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-card">
+      <h3>Support Type by Year</h3>
+      <div id="stackedSupport"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Student Outcomes by Category</h3>
+        <div id="outcomeChart"></div>
+
+    </div>
+  </div>
+
+<script>
+  const csvUrls = {
+    "2023-2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+    "2022-2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+    "2021-2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+    "2020-2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+    "2019-2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+    "2018-2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+    "2017-2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv'
+  };
+
+  let allData = [];
+
+  function loadAllCSVs() {
+    const filePromises = Object.entries(csvUrls).map(([yearKey, url]) =>
+      new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          download: true,
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            const cleaned = results.data.map(row => {
+              const newRow = {};
+              for (let key in row) {
+                const cleanKey = key.trim().replace(/\s+/g, ' ');
+                newRow[cleanKey] = row[key];
+              }
+              let rawYear = newRow['Reporting Year'] || '';
+              const normalizedYear = rawYear.toString().replace(/(\d{4})\/(\d{4})\s*SY/i, '$1-$2');
+              newRow['Reporting Year'] = normalizedYear;
+              return newRow;
+            });
+            resolve(cleaned);
+          },
+          error: reject
+        });
+      })
+    );
+
+    Promise.all(filePromises).then(results => {
+      allData = results.flat();
+      populateSchoolDropdown();
+      updateDashboard();
+    });
+  }
+
+  function populateSchoolDropdown() {
+    const schools = Array.from(new Set(allData.map(d => d['School Name'])));
+    const select = document.getElementById('schoolSelect');
+    select.innerHTML = '<option value="all">All Schools</option>';
+    schools.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      select.appendChild(opt);
+    });
+  }
+
+  function updateDashboard() {
+    const school = document.getElementById('schoolSelect').value;
+    const year = document.getElementById('yearSelect').value;
+
+    const filtered = allData.filter(d =>
+      d['Reporting Year'] === year &&
+      (school === 'all' || d['School Name'] === school)
+    );
+
+    const sumField = (field) =>
+      filtered.reduce((sum, row) => sum + (parseFloat(row[field]) || 0), 0);
+
+    document.getElementById('enrollment').textContent = sumField('Student Enrollment');
+    document.getElementById('served').textContent = sumField('Total Students Served');
+    document.getElementById('parents').textContent = sumField('Parents Engaged');
+
+    Plotly.newPlot('supportPie', [{
+      labels: ['Case Managed', 'Non-Case Managed', 'ONLY WS Supports'],
+      values: [
+        sumField('Case Managed Students'),
+        sumField('Non-Case Managed Students'),
+        sumField('Number of Students w/ ONLY WS Supports')
+      ],
+      type: 'pie',
+      hole: 0.4
+    }]);
+
+    const parentTrendData = {};
+    allData.forEach(row => {
+      if (school === 'all' || row['School Name'] === school) {
+        const y = row['Reporting Year'];
+        parentTrendData[y] = (parentTrendData[y] || 0) + (parseFloat(row['Parents Engaged']) || 0);
+      }
+    });
+
+    const years = Object.keys(parentTrendData).sort();
+    Plotly.newPlot('parentTrend', [{
+      x: years,
+      y: years.map(y => parentTrendData[y]),
+      type: 'bar'
+    }]);
+
+    const supportStacked = {};
+    allData.forEach(row => {
+      if (school === 'all' || row['School Name'] === school) {
+        const y = row['Reporting Year'];
+        supportStacked[y] = supportStacked[y] || { ws: 0, cm: 0 };
+        supportStacked[y].ws += parseFloat(row['Number of Students w/ ONLY WS Supports']) || 0;
+        supportStacked[y].cm += parseFloat(row['Case Managed Students']) || 0;
+      }
+    });
+
+    const supportYears = Object.keys(supportStacked).sort();
+    Plotly.newPlot('stackedSupport', [
+      {
+        name: 'ONLY WS Supports',
+        x: supportYears,
+        y: supportYears.map(y => supportStacked[y].ws),
+        type: 'bar'
+      },
+      {
+        name: 'Case Managed Students',
+        x: supportYears,
+        y: supportYears.map(y => supportStacked[y].cm),
+        type: 'bar'
+      }
+    ], { barmode: 'stack' });
+
+    
+    // ---------------- OUTCOMES CHART -------------------
+    const k11Cols = [
+    "K-11 Promoted", "K-11 Graduated", "K-11 Retained", "K-11 Dropped Out",
+    "K-11 Transferred", "K-11 GED", "K-11 Expelled", "K-11 Incarcerated",
+    "K-11 Deceased", "K-11 Other", "K-11 Unknown"
+    ];
+
+    const g12Cols = [
+    "Grade 12 Graduated", "Grade 12 Retained", "Grade 12 Dropped Out",
+    "Grade 12 Transferred", "Grade 12 GED", "Grade 12 Expelled"
+    ];
+
+    function getNonZeroColumns(columns) {
+    const colSums = {};
+    columns.forEach(col => {
+        colSums[col] = sumField(col);
+    });
+    return Object.entries(colSums)
+        .filter(([_, value]) => value > 0)
+        .reduce((acc, [k, v]) => {
+        acc.labels.push(k.replace(/^K-11 |^Grade 12 /, ''));
+        acc.values.push(v);
+        return acc;
+        }, { labels: [], values: [] });
+    }
+
+    const k11Data = getNonZeroColumns(k11Cols);
+    const g12Data = getNonZeroColumns(g12Cols);
+
+    const traces = [];
+
+    if (k11Data.labels.length > 0) {
+    traces.push({
+        name: 'K-11',
+        x: k11Data.values,
+        y: k11Data.labels,
+        type: 'bar',
+        orientation: 'h'
+    });
+    }
+
+    if (g12Data.labels.length > 0) {
+    traces.push({
+        name: 'Grade 12',
+        x: g12Data.values,
+        y: g12Data.labels,
+        type: 'bar',
+        orientation: 'h'
+    });
+    }
+
+    Plotly.newPlot('outcomeChart', traces, {
+    barmode: 'group',
+    margin: { l: 100 },
+    height: 400
+    });
+
+  }
+
+  loadAllCSVs();
+</script>
+</body>
+</html>

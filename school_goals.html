@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CIS School Goals Overview</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h1 class="mb-4">School Goals Overview</h1>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label for="schoolSelect" class="form-label">Select School</label>
+        <select class="form-select" id="schoolSelect">
+          <option value="All">All Schools</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="yearSelect" class="form-label">Select Reporting Year</label>
+        <select class="form-select" id="yearSelect">
+          <option value="All">All Years</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row text-white mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Goals Tracked</h5>
+            <p class="fs-4" id="goalsTracked">0</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Total Goals Set</h5>
+            <p class="fs-4" id="totalGoalsSet">0</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Goals Achieved</h5>
+            <p class="fs-4" id="goalsAchieved">0</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Overall Success</h5>
+            <p class="fs-4" id="overallSuccess">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion Section -->
+    <div class="accordion" id="goalAccordion">
+      <!-- Dynamic content will be injected here -->
+    </div>
+  </div>
+
+  <script>
+    const csvUrls = {
+      "2023-2024": 'school_data/CIS_EOY_2023_2024 - School Data.csv',
+      "2022-2023": 'school_data/CIS_EOY_2022_2023 - School Data.csv',
+      "2021-2022": 'school_data/CIS_EOY_2021_2022 - School Data.csv',
+      "2020-2021": 'school_data/CIS_EOY_2020_2021 - School Data.csv',
+      "2019-2020": 'school_data/CIS_EOY_2019_2020 - School Data.csv',
+      "2018-2019": 'school_data/CIS_EOY_2018_2019 - School Data.csv',
+      "2017-2018": 'school_data/CIS_EOY_2017_2018 - School Data.csv'
+    };
+
+    const allData = [];
+
+    const schoolSelect = document.getElementById('schoolSelect');
+    const yearSelect = document.getElementById('yearSelect');
+
+    Promise.all(Object.entries(csvUrls).map(([year, url]) => {
+      return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+          header: true,
+          download: true,
+          complete: (results) => {
+            const cleaned = results.data.map(row => {
+              const newRow = {};
+              for (const key in row) {
+                newRow[key.trim()] = row[key];
+              }
+              newRow["Reporting Year"] = year;
+              return newRow;
+            }).filter(r => r["School Name"]);
+            allData.push(...cleaned);
+            resolve();
+          },
+          error: reject
+        });
+      });
+    })).then(() => {
+      const schoolNames = new Set(allData.map(d => d["School Name"]).filter(Boolean));
+      const years = new Set(allData.map(d => d["Reporting Year"]));
+
+      schoolNames.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = s;
+        schoolSelect.appendChild(opt);
+      });
+
+      Array.from(years).sort((a, b) => b.localeCompare(a)).forEach(y => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = y;
+        yearSelect.appendChild(opt);
+      });
+
+      renderSummary(allData);
+      renderAllGoals(allData);
+    });
+
+    schoolSelect.addEventListener("change", applyFilters);
+    yearSelect.addEventListener("change", applyFilters);
+
+    function applyFilters() {
+        const selectedSchool = schoolSelect.value;
+        const selectedYear = yearSelect.value;
+
+        const filteredData = allData.filter(row => {
+        const matchSchool = selectedSchool === "All Schools" || row["School Name"] === selectedSchool;
+        const matchYear = selectedYear === "All Years" || row["Reporting Year"] === selectedYear;
+        return matchSchool && matchYear;
+        });
+
+        renderSummary(filteredData);
+        renderAllGoals(filteredData); 
+    }
+    function filterAndRender() {
+      const selectedSchool = schoolSelect.value;
+      const selectedYear = yearSelect.value;
+
+      const filtered = allData.filter(row => {
+        const matchSchool = selectedSchool === "All" || row["School Name"] === selectedSchool;
+        const matchYear = selectedYear === "All" || row["Reporting Year"] === selectedYear;
+        return matchSchool && matchYear;
+      });
+
+      renderSummary(filtered);
+    }
+
+    function renderSummary(data) {
+      let totalGoalsSet = 0;
+      let goalsAchieved = 0;
+      let goalsTracked = 0;
+
+      const goalColumns = [
+        "Attendance Rate - Have goal?", "Chronic Absenteeism - Have goal?", "Suspension Rate - Have goal?",
+        "Student Suspensions - Have goal?", "In-School Suspension Rate - Have goal?", "Out-of-School Suspension Rate - Have goal?",
+        "Graduation Rate - Have goal?", "4-year Graduation Rate - Have goal?", "5-year Graduation Rate - Have goal?",
+        "Promotion Rate - Have goal?", "Retention Rate - Have goal?", "Dropout Rate - Have goal?",
+        "Standardized test: % of students proficient in Math - Have goal?", "Standardized test: % of students proficient in English/Language Arts - Have goal?",
+        "EOC testing: % students who passed Math - Have goal?", "EOC testing: % students who passed English/ Lang. Arts/ Reading - Have goal?",
+        "Parent Engagement - Have goal?", "Social-Emotional Learning - Have goal?", "Other School Climate - Have goal?",
+        "% of students who took one or more AP courses - Have goal?", "% of students who received CTE certifications - Have goal?",
+        "% of students taking SAT - Have goal?", "Average SAT score - Have goal?", "% of senior cohort enrolled in postsecondary education - Have goal?"
+      ];
+
+      data.forEach(row => {
+        goalColumns.forEach(col => {
+          if (row[col]?.toLowerCase() === "yes") {
+            totalGoalsSet++;
+            goalsTracked++;
+            const achievedCol = col.replace("Have goal?", "Goal Achievement").trim();
+            if (parseFloat(row[achievedCol]) > 0) {
+              goalsAchieved++;
+            }
+          }
+        });
+      });
+
+      const successPercentage = totalGoalsSet > 0 ? ((goalsAchieved / totalGoalsSet) * 100).toFixed(1) : 0;
+
+      document.getElementById("goalsTracked").textContent = goalsTracked;
+      document.getElementById("totalGoalsSet").textContent = totalGoalsSet;
+      document.getElementById("goalsAchieved").textContent = goalsAchieved;
+      document.getElementById("overallSuccess").textContent = `${successPercentage}%`;
+
+      
+    }
+
+
+    function renderAllGoals(data) {
+    const container = document.getElementById("goalAccordion");
+    container.innerHTML = ""; // Clear previous
+
+    container.appendChild(renderGoalCategory("Academic Goals", data, [
+      "Standardized test: % of students proficient in Math",
+      "Standardized test: % of students proficient in English/Language Arts",
+      "EOC testing: % students who passed Math",
+      "EOC testing: % students who passed English/ Lang. Arts/ Reading",
+      "Graduation Rate",
+      "4-year Graduation Rate",
+      "5-year Graduation Rate",
+      "Promotion Rate",
+      "Retention Rate",
+      "Dropout Rate",
+      "% of students who received CTE certifications",
+      "% of students taking SAT",
+      "Average SAT score",
+      "% of senior cohort enrolled in postsecondary education"
+    ]));
+
+    container.appendChild(renderGoalCategory("Behavioral Goals", data, [
+      "Attendance Rate",
+      "Chronic Absenteeism",
+      "Suspension Rate",
+      "Student Suspensions",
+      "In-School Suspension Rate",
+      "Out-of-School Suspension Rate"
+    ]));
+
+    container.appendChild(renderGoalCategory("Engagement / Climate Goals", data, [
+      "Parent Engagement",
+      "Social-Emotional Learning",
+      "Other School Climate",
+      "% of students who took one or more AP courses"
+    ]));
+  }
+
+    function renderGoalCategory(title, data, goalBaseNames) {
+  const wrapper = document.createElement("div");
+  wrapper.classList.add("mb-5");
+
+  const header = document.createElement("h3");
+  header.textContent = title;
+  wrapper.appendChild(header);
+
+  // Count total goals set, achieved, and unachieved
+  let totalSet = 0, totalAchieved = 0;
+
+  goalBaseNames.forEach(base => {
+    data.forEach(row => {
+      const goalKey = `${base} - Have goal?`;
+      const achievedKey = `${base} - Goal Achievement`;
+
+      const hasGoal = row[goalKey]?.toLowerCase() === "yes";
+      const achieved = parseFloat(row[achievedKey]) || 0;
+
+      if (hasGoal) {
+        totalSet++;
+        if (achieved > 0) totalAchieved++;
+      }
+    });
+  });
+
+  const unachieved = totalSet - totalAchieved;
+  const notSet = goalBaseNames.length * data.length - totalSet;
+
+  // Create canvas element for Chart.js
+  const canvas = document.createElement("canvas");
+  canvas.height = 300;
+  const chartId = `chart-${title.replace(/\s+/g, '-')}-${Math.random().toString(36).substring(7)}`;
+  canvas.id = chartId;
+  canvas.style.maxWidth = "400px"; // Limit the width to 400px
+  canvas.style.maxHeight = "300px"; // Limit the height to 300px
+  canvas.style.width = "100%";
+  canvas.style.marginLeft = "auto"; // Center it horizontally
+  canvas.style.marginRight = "auto";
+  wrapper.appendChild(canvas);
+
+  // Defer chart rendering to allow DOM to fully update
+  setTimeout(() => {
+    const ctx = document.getElementById(chartId).getContext("2d");
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Achieved', 'Not Achieved', 'No Goal Set'],
+        datasets: [{
+          data: [totalAchieved, unachieved, notSet],
+          backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          },
+          title: {
+            display: false
+          }
+        }
+      }
+    });
+  }, 0);
+
+  return wrapper;
+}
+
+
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
