@@ -55,15 +55,15 @@
 
   <script>
     const csvUrls = {
-      "2023_2024": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2023_2024.csv',
-      "2022_2023": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2022_2023.csv',
-      "2021_2022": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2021_2022.csv',
-      "2020_2021": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2020_2021.csv',
-      "2019_2020": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2019_2020.csv',
-      "2018_2019": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2018_2019.csv',
-      "2017_2018": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2017_2018.csv',
-      "2016_2017": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2016_2017.csv',
-      "2015_2016": 'https://raw.githubusercontent.com/rdupart/student_support_dashboard/refs/heads/main/data/CIS_byProvider_Tier2and3Support_2015_2016.csv'
+      "2023_2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022_2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021_2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020_2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019_2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018_2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017_2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv',
+      "2016_2017": 'student_data/CIS_EOY_2016_2017 - Student Data.csv',
+      "2015_2016": 'student_data/CIS_EOY_2015_2016 - Student Data.csv'
     };
 
     let data = [];
@@ -84,9 +84,12 @@
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: function(results) {
-          data = results.data; // Store data in the variable
+          data = results.data;
           populateSchoolDropdown();
-          updateCategoryDropdowns(); // Update categories dropdown
+          updateCategoryDropdowns();
+        },
+        error: function(error) {
+          console.error('Error loading CSV:', error);
         }
       });
     }
@@ -95,7 +98,8 @@
       const schoolSelect = document.getElementById('schoolSelect');
       schoolSelect.innerHTML = '<option value="all">All Schools</option>';
 
-      const schools = Array.from(new Set(data.map(d => d['School Where Support Was Provided']))).filter(Boolean).sort();
+      const schools = [...new Set(data.map(d => d['School Where Support Was Provided']).filter(Boolean))];
+      
       schools.forEach(school => {
         const opt = document.createElement('option');
         opt.value = school;
@@ -106,10 +110,13 @@
 
     function updateCategoryDropdowns() {
       const selectedSchool = document.getElementById('schoolSelect').value;
-      const filteredData = selectedSchool === 'all' ? data : data.filter(d => d['School Where Support Was Provided'] === selectedSchool);
-
-      const supportCategories = Array.from(new Set(filteredData.map(d => d['Student Support Category']))).filter(Boolean).sort();
-
+      
+      const filteredData = selectedSchool === 'all' 
+        ? data 
+        : data.filter(d => d['School Where Support Was Provided'] === selectedSchool);
+      
+      const supportCategories = [...new Set(filteredData.map(d => d['Student Support Category']).filter(Boolean))];
+      
       const supportSelect = document.getElementById('supportCategorySelect');
       supportSelect.innerHTML = '<option value="all">All Categories</option>';
 

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chart from CSV Data</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 10px;
+      color: #333;
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #0057B8;
+    }
+    select {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #b0b8c1;
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s;
+      margin-right: 15px;
+    }
+    select:focus {
+      border: 1.5px solid #0057B8;
+      outline: none;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 18px;
+      margin-bottom: 20px;
+      border-top: 3px solid #0057B8;
+    }
+    .chart-container:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <div>
+      <label for="yearSelect">Select Year:</label>
+      <select id="yearSelect" onchange="loadData()">
+        <option value="2023_2024" selected>2023-2024</option>
+        <option value="2022_2023">2022-2023</option>
+        <option value="2021_2022">2021-2022</option>
+        <option value="2020_2021">2020-2021</option>
+        <option value="2019_2020">2019-2020</option>
+        <option value="2018_2019">2018-2019</option>
+        <option value="2017_2018">2017-2018</option>
+        <option value="2016_2017">2016-2017</option>
+        <option value="2015_2016">2015-2016</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="schoolSelect">Select School:</label>
+      <select id="schoolSelect" onchange="updateCharts()">
+        <option value="all">All Schools</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="chartTypeSelect">Chart Type:</label>
+      <select id="chartTypeSelect" onchange="updateCharts()">
+        <option value="pie" selected>Pie Chart</option>
+        <option value="bar">Bar Chart</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="tier2-chart" class="chart-container"></div>
+  <div id="tier3-chart" class="chart-container"></div>
+  <div id="combined-chart" class="chart-container"></div>
+
+
+  <script>
+
+    const csvUrls = {
+      "2023_2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022_2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021_2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020_2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019_2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018_2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017_2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv',
+      "2016_2017": 'student_data/CIS_EOY_2016_2017 - Student Data.csv',
+      "2015_2016": 'student_data/CIS_EOY_2015_2016 - Student Data.csv'
+    };
+    let data = [];
+
+    function loadData() {
+      const selectedYear = document.getElementById('yearSelect').value;
+      const csvUrl = csvUrls[selectedYear];
+
+      console.log("Fetching CSV from:", csvUrl);
+
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data;
+          console.log("Parsed data:", data);
+          populateSchoolDropdown();
+          updateCharts();
+        },
+        error: function(err) {
+          console.error("Failed to load CSV:", err);
+          alert("Failed to load data for " + selectedYear);
+        }
+      });
+    }
+
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+
+      const schools = Array.from(new Set(data.map(item => item['School Name']))).filter(s => s);
+      schools.sort();
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    function updateCharts() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const chartType = document.getElementById('chartTypeSelect').value;
+
+      const filteredData = selectedSchool === 'all'
+        ? data
+        : data.filter(item => item['School Name'] === selectedSchool);
+
+      const categoryMap = {};
+      filteredData.forEach(item => {
+        const category = item['Support Category'];
+        if (!category) return;
+        if (!categoryMap[category]) categoryMap[category] = { tier2: 0, tier3: 0 };
+        categoryMap[category].tier2 += item['Tier II Hours'] || 0;
+        categoryMap[category].tier3 += item['Tier III Hours'] || 0;
+      });
+
+      const categories = Object.keys(categoryMap);
+      const tier2Supports = categories.map(cat => categoryMap[cat].tier2);
+      const tier3Supports = categories.map(cat => categoryMap[cat].tier3);
+      const combinedSupports = categories.map((cat, i) => tier2Supports[i] + tier3Supports[i]);
+
+      // Tier 2 Chart
+      const tier2Data = (chartType === 'pie')
+        ? [{
+            labels: categories,
+            values: tier2Supports,
+            type: 'pie',
+            textinfo: 'label+value',
+            texttemplate: '%{label}: %{value} hrs'
+          }]
+        : [{
+            x: categories,
+            y: tier2Supports,
+            type: 'bar'
+          }];
+
+      Plotly.newPlot('tier2-chart', tier2Data, {
+        title: {
+          text: `Tier II Supports`,
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        xaxis: { 
+          title: 'Category',
+          titlefont: { size: 14, color: '#333' }
+        },
+        yaxis: { 
+          title: 'Hours',
+          titlefont: { size: 14, color: '#333' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 50, l: 50, r: 30 },
+        colorway: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
+      });
+
+      // Tier 3 Chart
+      const tier3Data = (chartType === 'pie')
+        ? [{
+            labels: categories,
+            values: tier3Supports,
+            type: 'pie',
+            textinfo: 'label+value',
+            texttemplate: '%{label}: %{value} hrs'
+          }]
+        : [{
+            x: categories,
+            y: tier3Supports,
+            type: 'bar'
+          }];
+
+      Plotly.newPlot('tier3-chart', tier3Data, {
+        title: {
+          text: `Tier III Supports`,
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        xaxis: { 
+          title: 'Category',
+          titlefont: { size: 14, color: '#333' }
+        },
+        yaxis: { 
+          title: 'Hours',
+          titlefont: { size: 14, color: '#333' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 50, l: 50, r: 30 },
+        colorway: ['#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E', '#0057B8']
+      });
+
+      // Combined Chart
+      const combinedData = (chartType === 'pie')
+        ? [{
+            labels: categories,
+            values: combinedSupports,
+            type: 'pie',
+            textinfo: 'label+value',
+            texttemplate: '%{label}: %{value} hrs'
+          }]
+        : [{
+            x: categories,
+            y: combinedSupports,
+            type: 'bar'
+          }];
+
+      Plotly.newPlot('combined-chart', combinedData, {
+        title: {
+          text: `Combined Tier II and III Supports`,
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        xaxis: { 
+          title: 'Category',
+          titlefont: { size: 14, color: '#333' }
+        },
+        yaxis: { 
+          title: 'Hours',
+          titlefont: { size: 14, color: '#333' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 50, l: 50, r: 30 },
+        colorway: ['#0057B8', '#E31B23', '#FFC72C', '#00A9E0', '#78BE20', '#6E2585', '#F7941E']
+      });
+    }
+
+
+    // Load initial dataset
+    loadData();
+  </script>
+</body>
+</html>

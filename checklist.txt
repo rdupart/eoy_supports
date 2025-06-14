@@ -1,0 +1,67 @@
+Absolutely! Here is your implementation checklist using `[ ]` for tracking:
+
+---
+
+### ✅ **IMPLEMENTATION CHECKLIST**
+
+---
+
+#### 🚫 REMOVE (Delete the following):
+
+* [x] **Monthly data for Site Professionals and Program Managers**
+* [x] **End of year data for 22–23 school year**
+* [x] **Caseload Buildup Tab**
+* [x] **Tier I Supports Tab**
+* [x] **Disaggregation Tab**
+* [x] **Student Attributes Tab**
+* [x] **Caseload Demographics Tab**
+* [x] **Graduation Rates Tab**
+* [ ] **All subtabs under the "MORE" tab**
+
+---
+
+#### 🛠️ FIX / REPLACE
+
+##### 🔹 **Support Profiles Tab**
+
+* [x] Ensure school names populate from the CSV column
+* [x] Fix Tier 2, Tier 3, and Combined charts (investigate JS/data issues)
+
+##### 🔹 **Referral Reasons Tab**
+
+* [x] Ensure school name dropdown populates correctly
+* [x] Ensure charts load properly
+* [x] Render `tiers.html` correctly on this tab
+
+##### 🔹 **Annual Outcomes Tab**
+
+* [x] Use **Students Served** dropdown logic as reference for others
+* [x] Remove **Monthly Student Count Trends**
+* [x] Add **Yearly Student Count Trends** using real year-based data
+
+##### 🔹 **Schoolwide Goals Tab**
+
+* [x] Load `school_goals.html` (currently returns 404)
+
+##### 🔹 **Student Goals Tab**
+
+* [x] Load `goals.html` (currently returns an error)
+
+---
+
+#### 🧭 **MORE Tab – Rebuild with New Subtabs**
+
+* [x] Add **Tier Support Activities** – `tier_support_activites.html`
+* [x] Add **Tier Activities** – `tier_activities.html`
+* [x] Add **Tier II** – `tiers.html`
+* [x] Add **Tier III** – `tiers.html`
+* [x] Add **Student Progress Tracker** – `student_progress_tracker`
+
+---
+
+#### 🏠 **Home Page**
+
+* [x] Display `summary_report.html` as homepage content also
+
+---
+

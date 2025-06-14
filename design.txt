@@ -1,0 +1,351 @@
+**Page Header**
+
+* **Google Sites Logo:** The top-left corner shows the standard Google Sites icon (a generic “sites.google.com” image) ([Google Sites][1]).
+* **Site Title:** Immediately to the right of the logo, the site’s name is displayed as “CISEPA Dashboard” ([Google Sites][1]). There is no additional logo for Communities In Schools; the branding is limited to the text “CISEPA Dashboard.”
+* **Search Bar:** Beneath the header, a “Search this site” field is present, allowing users to search for content within the dashboard ([Google Sites][1]).
+* **Accessibility Links:** Just above the navigation bar (but below the search bar), there are “Skip to main content” and “Skip to navigation” links for screen-reader and keyboard-only users ([Google Sites][1]).
+
+---
+
+## Navigation Bar
+
+The primary navigation bar spans horizontally under the site header. It includes the following items (each item is a clickable link or dropdown): ([Google Sites][1])
+
+1. **Home**
+
+   * Label: “Home”
+   * Links back to the main dashboard page (the URL you provided).
+
+2. **Our Agency and Network**
+
+   * Label: “Our Agency and Network”
+   * When clicked, this anchors or takes the user to a section (later on the page) that explains high-level agency statistics and network information.
+
+3. **Current Dashboards** (Dropdown)
+
+   * When hovered or clicked, reveals three sub-items:
+
+     * **Caseload Buidup** (sic)
+     * **Support Profiles**
+     * **Referral Reasons**
+
+4. **Annual Outcomes** (Dropdown)
+
+   * Sub-items include (in this order):
+
+     1. **Students Served**
+     2. **Schoolwide Goals**
+     3. **Tier I Supports**
+     4. **Student Goals**
+     5. **Disaggregation**
+     6. **Student Attributes**
+     7. **Caseload Demographics**
+     8. **Graduation Rates**
+
+5. **2024 Outcomes** (Dropdown)
+
+   * Sub-items include:
+
+     1. **24 Schoolwide Outcomes**
+     2. **24 Case Management**
+     3. **Students Served 2024**
+     4. **24 Tiered Supports Profile**
+     5. **Network Demographics 2024**
+     6. **24 Disaggregation**
+     7. **24 Grad/Prom Rates**
+
+6. **2023 Outcomes** (Dropdown)
+
+   * Sub-items include:
+
+     1. **Network Demographics**
+     2. **Case Management Outcomes**
+     3. **Schoolwide Outcomes**
+     4. **Tiered Supports Profile**
+     5. **Graduation Rate**
+     6. **Disaggregation**
+
+7. **More…** (Dropdown)
+
+   * Under “More,” the menu essentially repeats the top-level structure, providing:
+
+     * **Home**
+     * **Our Agency and Network**
+     * **Current Dashboards**
+
+       * Caseload Buidup
+       * Support Profiles
+       * Referral Reasons
+     * **Annual Outcomes** (with the same eight sub-items listed above)
+     * **2024 Outcomes** (with the same seven sub-items)
+     * **2023 Outcomes** (with the same six sub-items) ([Google Sites][1])
+
+> **Note on Design:** On desktop view, the “More…” dropdown typically appears at the far right of the navigation bar. It serves as a catch-all (especially for mobile or narrower screens) to ensure every link remains accessible.
+
+---
+
+## Hero Section / First View
+
+On this Google Sites layout, there is no large background image or hero banner graphic. Instead, the “hero” content consists of a prominent page title and supporting introductory text:
+
+1. **Primary Heading:**
+
+   * Text: **“Data at CIS of Eastern PA”**
+   * Display Style: Rendered as an H1/Hero heading (large, bold font) at the top of the main content area, immediately below the navigation bar ([Google Sites][1]).
+
+2. **Introductory Paragraphs:** Directly under the heading, four paragraphs of body copy explain the purpose of the dashboard. The content is as follows (all plain text, left-aligned; no background image behind it):
+
+   > **Paragraph 1:**
+   > “At Communities in Schools of Eastern Pennsylvania (CISEPA), our mission is to surround students with a community of support, empowering them to stay in school and achieve in life. Our **Core Values are Connection, Accountability, Relationships, and Equity**.”
+   >
+   > * The words “Core Values are Connection, Accountability, Relationships, and Equity” are a hyperlink that points to the CIS Eastern PA main site ([www.ciseasternpa.org](http://www.ciseasternpa.org)) ([Google Sites][1]).
+
+   > **Paragraph 2:**
+   > “CISEPA is an accredited affiliate of Communities in Schools National, and maintains a variety of operational standards related to data collection, reporting, and verification. As part of our model, we collect a broad range of data each year from annual studies of school demographics and community census data to individual and family risk factors for each of our case managed students.”
+
+   > **Paragraph 3:**
+   > “Our Operations Team trains, monitors, and regularly evaluates program data on a monthly, quarterly, and annual basis. They work closely with senior leadership to report our results to school district partners, funding agencies, and our board of directors throughout the year. Operations also works closely with our site professionals to provide ongoing review of our accreditation standards and evaluate overall site health.”
+
+   > **Paragraph 4:**
+   > “We review progress on our programs regularly throughout the year as part of a continuous improvement model that drives adjustment and helps us improve our impact on student and school-wide goals.”
+
+   > **Paragraph 5:**
+   > “As part of our Data Driven Culture, this website brings together annual, and ongoing visualizations of our agency, our network, and our impact on students and families.” ([Google Sites][1]).
+
+3. **Supporting Image (Beneath Introductory Text):**
+
+   * There is a single image immediately below the fifth paragraph (no caption is visible in the source). The only alt text is generically “Image.” In the Google Sites editor, this likely represents a graphic (e.g., a stylized chart-placeholder or thematic illustration about “data culture”), but no specific alt-tag or descriptive text is provided in the DOM. ([Google Sites][1]).
+
+---
+
+## Main Content Sections
+
+Below the hero section, the page presents three “sub-sections,” each introduced by a heading and accompanied by a brief description plus an image/icon. These likely serve as entry points (tiles or cards) linking to deeper dashboards. Each block is separated visually by white space. The headings appear as if they might be styled in a slightly smaller H2 (but still bold). They are:
+
+1. ### “Our Agency and Network”
+
+   * **Heading Text:** “Our Agency and Network” (clickable, linking to a separate page or anchor) ([Google Sites][1]).
+   * **Body Copy (one sentence):**
+
+     > “Start on your journey through our data here. Learn about the size of our network, our geographic footprint, and other key agency statistics.”
+   * **Accompanying Image:** Directly beneath that sentence, there is an image (alt text: “Image”) that visually represents agency and network data. Since the source simply shows “Image: sites.google.com,” it is likely a placeholder or a chart thumbnail (perhaps a map or organizational chart). ([Google Sites][1]).
+
+2. ### “Current Dashboards”
+
+   * **Sub-Heading:** There is no separate header text that literally says “Current Dashboards.” Instead, the next line after the first block reads “Year over year comparisons of our data” (likely a sub-caption). However, given the left-nav structure, “Current Dashboards” refers to the dropdown in the navigation bar, so on this page the visible header is effectively “Our Agency and Network.” The “Current Dashboards” link in the nav bar likely points to a different page—so on this homepage, the visible text is:
+
+     > **“Year over year comparisons of our data”**
+     >
+     > * **Image Beneath:** A graphic (alt text: “Image”) intended to show a year-over-year comparison chart or interactive visualization ([Google Sites][1]).
+
+3. ### “Monthly data for Site Professionals and Program Managers”
+
+   * **Caption Text:**
+
+     > “Monthly data for Site Professionals and Program Managers.”
+   * **Accompanying Image:** Another generic “Image” (no alt text), likely representing a bar chart or series of monthly charts ([Google Sites][1]).
+
+4. ### “End of year data for 22-23 school year”
+
+   * **Caption Text:**
+
+     > “End of year data for 22-23 school year.”
+   * No image is explicitly coded after that line (in the snippet), but it appears as a standalone text followed by navigation links (see below). ([Google Sites][1]).
+
+5. **Navigation Link Bar (Beneath the Three Blocks):**
+
+   * A small set of links (likely styled as a breadcrumb or secondary navigation) appears:
+
+     * **Back to Home** (returns to this same page)
+     * **Annual Outcomes** (links to a section or page titled “2023-24 Outcomes”)
+     * **Current Dashboards** (links back to the “Current Dashboards” section or a distinct page) ([Google Sites][1]).
+   * Directly under those links, there is a hyperlink labeled **“2023-24 Outcomes”** that goes to an external URL (likely a Google Data Studio or report) ([Google Sites][1]).
+
+---
+
+## Footer / Page Credit
+
+At the very bottom of the page (beneath all content), the site includes:
+
+1. **Data Attribution:**
+
+   > “Data and visualizations prepared by Jon Irons, Manager of Data and Evaluation. Contact with questions or to request additional data [ironsj@ciseasternpa.org](mailto:ironsj@ciseasternpa.org) Call/Text: 484-891-1760” ([Google Sites][1]).
+
+   * This is plain text (not a form); the email “[ironsj@ciseasternpa.org](mailto:ironsj@ciseasternpa.org)” is not hyperlinked in the source, nor is the phone number clickable. It simply appears for user reference.
+
+2. **Utility Links (Google Sites Controls):**
+
+   * **Report abuse** (a standard Google Sites link for reporting policy violations).
+   * **Page details** (a link that shows last updated timestamp, page size, etc.).
+   * **Page updated** (this text indicates when the site was last modified, though the exact date is not shown in the snippet). ([Google Sites][1]).
+
+---
+
+# Summary Breakdown (Outline Form)
+
+1. **Header:**
+
+   * Google Sites icon (generic “sites.google.com” logo)
+   * Site Title: “CISEPA Dashboard”
+   * Search bar: “Search this site”
+   * “Skip to main content” / “Skip to navigation” for accessibility
+
+2. **Navigation Bar (Primary Menu):**
+
+   * Home
+   * Our Agency and Network
+   * Current Dashboards
+
+     * Caseload Buidup
+     * Support Profiles
+     * Referral Reasons
+   * Annual Outcomes
+
+     * Students Served
+     * Schoolwide Goals
+     * Tier I Supports
+     * Student Goals
+     * Disaggregation
+     * Student Attributes
+     * Caseload Demographics
+     * Graduation Rates
+   * 2024 Outcomes
+
+     * 24 Schoolwide Outcomes
+     * 24 Case Management
+     * Students Served 2024
+     * 24 Tiered Supports Profile
+     * Network Demographics 2024
+     * 24 Disaggregation
+     * 24 Grad/Prom Rates
+   * 2023 Outcomes
+
+     * Network Demographics
+     * Case Management Outcomes
+     * Schoolwide Outcomes
+     * Tiered Supports Profile
+     * Graduation Rate
+     * Disaggregation
+   * More… (repeats nearly all of the above for mobile/overflow) ([Google Sites][1])
+
+3. **Hero Section / Intro:**
+
+   * H1 Title: “Data at CIS of Eastern PA”
+   * Five paragraphs explaining mission, values, accreditation, data collection, operations team, continuous improvement, and the site’s purpose.
+   * The phrase “Core Values are Connection, Accountability, Relationships, and Equity” is hyperlinked to the main CIS Eastern PA site.
+   * A generic “Image” beneath these paragraphs (likely a stylized graphic related to data culture) ([Google Sites][1]).
+
+4. **Main “Tiles” / Sub-Sections (each with heading, text, and image):**
+
+   * **Section A: “Our Agency and Network”**
+
+     * Subtext: “Start on your journey through our data here. Learn about the size of our network, our geographic footprint, and other key agency statistics.”
+     * Accompanying image (placeholder style “Image”).
+   * **Section B: “Year over year comparisons of our data”**
+
+     * Accompanying image (placeholder “Image”).
+   * **Section C: “Monthly data for Site Professionals and Program Managers”**
+
+     * Accompanying image (placeholder “Image”).
+   * **Section D: “End of year data for 22-23 school year”** (no image shown, but treated as a separate text block).
+   * **Additional Links Underneath:**
+
+     * Back to Home
+     * Annual Outcomes (2023-24 Outcomes) – links to a Google Data Studio or similar external report
+     * Current Dashboards
+
+5. **Footer / Credits:**
+
+   * “Data and visualizations prepared by Jon Irons, Manager of Data and Evaluation. Contact… [ironsj@ciseasternpa.org](mailto:ironsj@ciseasternpa.org) Call/Text: 484-891-1760”
+   * Standard Google Sites control links: “Report abuse,” “Page details,” and “Page updated.” ([Google Sites][1])
+
+---
+
+### Visual and Layout Notes
+
+* **Color Scheme & Typography:**
+
+  * Because this is a Google Sites–generated template, the fonts are the default Google Sites serif or sans-serif (depending on overall site theme). There is no visible use of custom brand colors—everything adheres to Google Sites’ standard styling (black headings on white background, blue links, gray-tone menu dropdowns).
+  * All text blocks are left-aligned, with standard body copy (16px or 18px) and headings (24px+).
+
+* **Images:**
+
+  * Each image block is inserted as a generic Google Sites image widget. In the DOM, the alt text is simply “Image,” so there is no description provided. The actual images are likely screenshots of charts or data visuals, but since the source doesn’t expose alt or captions, we describe them as “generic images representing” the section’s topic.
+
+* **Spacing & Sections:**
+
+  * There is approximately 24px–32px vertical white-space padding between each major block (hero text, then image, then next section, etc.).
+  * Each of the three sub-sections (Our Agency and Network / Year-over-Year / Monthly data) appears stacked vertically rather than in a side-by-side grid. Under each heading, the image is centered (full-width for that content block) but sized so it does not stretch edge-to-edge beyond typical margins.
+
+* **Footer:**
+
+  * The “Data and visualizations prepared by Jon Irons…” text sits left-aligned at the very bottom of the main content container (no extra background color). Below that, the small “Report abuse” / “Page details” / “Page updated” links appear in a lighter gray font, flush left.
+
+---
+
+### Complete Text Content (Copy-and-Pasted)
+
+> **Heading (H1):**
+> Data at CIS of Eastern PA ([Google Sites][1])
+
+> **Paragraph 1:**
+> At Communities in Schools of Eastern Pennsylvania (CISEPA), our mission is to surround students with a community of support, empowering them to stay in school and achieve in life. Our **Core Values are Connection, Accountability, Relationships, and Equity**. ([Google Sites][1])
+
+> **Paragraph 2:**
+> CISEPA is an accredited affiliate of Communities in Schools National, and maintains a variety of operational standards related to data collection, reporting, and verification. As part of our model, we collect a broad range of data each year from annual studies of school demographics and community census data to individual and family risk factors for each of our case managed students. ([Google Sites][1])
+
+> **Paragraph 3:**
+> Our Operations Team trains, monitors, and regularly evaluates program data on a monthly, quarterly, and annual basis. They work closely with senior leadership to report our results to school district partners, funding agencies, and our board of directors throughout the year. Operations also works closely with our site professionals to provide ongoing review of our accreditation standards and evaluate overall site health. ([Google Sites][1])
+
+> **Paragraph 4:**
+> We review progress on our programs regularly throughout the year as part of a continuous improvement model that drives adjustment and helps us improve our impact on student and school-wide goals. ([Google Sites][1])
+
+> **Paragraph 5:**
+> As part of our Data Driven Culture, this website brings together annual, and ongoing visualizations of our agency, our network, and our impact on students and families. ([Google Sites][1])
+
+> *(Image here—alt text: “Image”)* ([Google Sites][1])
+
+> **Section: Our Agency and Network (H2):**
+> Start on your journey through our data here. Learn about the size of our network, our geographic footprint, and other key agency statistics. ([Google Sites][1])
+
+> *(Image here—alt text: “Image”)* ([Google Sites][1])
+
+> **Section: Year over year comparisons of our data (H2):**
+> *(Image here—alt text: “Image”)* ([Google Sites][1])
+
+> **Section: Monthly data for Site Professionals and Program Managers (H2):**
+> *(Image here—alt text: “Image”)* ([Google Sites][1])
+
+> **Section: End of year data for 22-23 school year (H2):**
+
+> **Navigation Links (small, under the sections):**
+> • Back to Home
+> • Annual Outcomes (links to “2023-24 Outcomes”)
+> • Current Dashboards ([Google Sites][1])
+
+> **“2023-24 Outcomes”** (direct external link to a report or Google dashboard) ([Google Sites][1])
+
+> **Footer Text:**
+> Data and visualizations prepared by Jon Irons, Manager of Data and Evaluation
+> Contact with questions or to request additional data [ironsj@ciseasternpa.org](mailto:ironsj@ciseasternpa.org) Call/Text: 484-891-1760 ([Google Sites][1])
+
+> **Google Sites Utility Links (gray, small font):**
+> • Report abuse
+> • Page details
+> • Page updated ([Google Sites][1])
+
+---
+
+**Design Summary**
+
+* **Overall Layout:** A straightforward, vertically stacked Google Sites page—no custom CSS or non-Google-Sites elements.
+* **Primary Emphasis:** The heading (“Data at CIS of Eastern PA”) plus five paragraphs of mission-driven text in the hero area.
+* **Secondary Emphasis:** Three card-like subsections (“Our Agency and Network,” “Year over year comparisons,” “Monthly data for Site Professionals…”) each with a representative image.
+* **Navigation:** A multi-level horizontal menu that reveals dropdowns on hover for deeper “Dashboard” categories (e.g., Annual Outcomes, 2024 Outcomes, etc.).
+* **Imagery:** All inserted images use the default Google Sites widget; none have descriptive alt text beyond the placeholder “Image.”
+* **Color & Typography:** Default Google Sites theme (black text on white background, blue hyperlink text, standard sans-serif heading fonts).
+* **Footer:** Crediting the data author (Jon Irons), plus Google Sites–provided controls (Report abuse, Page details, Page updated). ([Google Sites][1])
+
+This outlines every design element (logo, title, nav items, section headings, images, footer) and all visible textual content for the “CISEPA Dashboard” home page as requested.
+
+[1]: https://sites.google.com/ciseasternpa.org/datadashboard/home?authuser=0 "CISEPA Dashboard"

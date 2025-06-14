@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Engagement Metrics</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 10px;
+      color: #333;
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #0057B8;
+    }
+    select {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #b0b8c1;
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s;
+      margin-right: 15px;
+    }
+    select:focus {
+      border: 1.5px solid #0057B8;
+      outline: none;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 18px;
+      margin-bottom: 20px;
+      border-top: 3px solid #0057B8;
+    }
+    .chart-container:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+    .stats-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      flex: 1;
+      min-width: 150px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 15px;
+      text-align: center;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      border-top: 3px solid #0057B8;
+    }
+    .stat-title {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0057B8;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <div>
+      <label for="yearSelect">Select Year:</label>
+      <select id="yearSelect" onchange="loadData()">
+        <option value="2023_2024" selected>2023-2024</option>
+        <option value="2022_2023">2022-2023</option>
+        <option value="2021_2022">2021-2022</option>
+        <option value="2020_2021">2020-2021</option>
+        <option value="2019_2020">2019-2020</option>
+        <option value="2018_2019">2018-2019</option>
+        <option value="2017_2018">2017-2018</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="schoolSelect">Select School:</label>
+      <select id="schoolSelect" onchange="updateCharts()">
+        <option value="all">All Schools</option>
+        <!-- Dynamic options will be populated here -->
+      </select>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-title">Total Students</div>
+      <div class="stat-value" id="total-students">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Case Managed</div>
+      <div class="stat-value" id="case-managed">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Parents Engaged</div>
+      <div class="stat-value" id="parents-engaged">-</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Engagement Rate</div>
+      <div class="stat-value" id="engagement-rate">-</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div id="engagement-chart" class="chart-container"></div>
+  <div id="service-hours-chart" class="chart-container"></div>
+  <div id="risk-factors-chart" class="chart-container"></div>
+
+  <script>
+    const csvUrls = {
+      "2023_2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022_2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021_2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020_2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019_2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv',
+      "2018_2019": 'student_data/CIS_EOY_2018_2019 - Student Data.csv',
+      "2017_2018": 'student_data/CIS_EOY_2017_2018 - Student Data.csv'
+    };
+
+    let data = [];
+    let allYearsData = {};
+
+    function loadData() {
+      const selectedYear = document.getElementById('yearSelect').value;
+      const csvUrl = csvUrls[selectedYear];
+
+      Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data;
+          populateSchoolDropdown();
+          
+          // Also load data from all years for trend analysis
+          loadAllYearsData();
+        },
+        error: function(err) {
+          console.error("Failed to load CSV:", err);
+          alert("Failed to load data for " + selectedYear);
+        }
+      });
+    }
+
+    function loadAllYearsData() {
+      const promises = Object.entries(csvUrls).map(([year, url]) => {
+        return new Promise((resolve, reject) => {
+          if (year === document.getElementById('yearSelect').value) {
+            // We already have this year's data
+            allYearsData[year] = data;
+            resolve();
+            return;
+          }
+          
+          Papa.parse(url, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+              allYearsData[year] = results.data;
+              resolve();
+            },
+            error: reject
+          });
+        });
+      });
+      
+      Promise.all(promises)
+        .then(() => updateCharts())
+        .catch(err => console.error("Error loading all years data:", err));
+    }
+
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+
+      const schools = Array.from(new Set(data.map(item => item['School Name']))).filter(Boolean);
+      schools.sort().forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+
+    function updateCharts() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      
+      // Filter data by selected school
+      const filteredData = selectedSchool === 'all' 
+        ? data 
+        : data.filter(item => item['School Name'] === selectedSchool);
+      
+      // Calculate key metrics
+      const totalStudents = filteredData.length;
+      const caseManaged = filteredData.filter(item => item['Case Managed'] === 1 || 
+                                                     item['Case Managed'] === true || 
+                                                     item['Case Managed'] === 'Yes').length;
+      const parentsEngaged = filteredData.filter(item => item['Parent Engagement'] === 1 || 
+                                                        item['Parent Engagement'] === true || 
+                                                        item['Parent Engagement'] === 'Yes').length;
+      const engagementRate = totalStudents > 0 ? Math.round((caseManaged / totalStudents) * 100) : 0;
+      
+      // Update metric cards
+      document.getElementById('total-students').textContent = totalStudents;
+      document.getElementById('case-managed').textContent = caseManaged;
+      document.getElementById('parents-engaged').textContent = parentsEngaged;
+      document.getElementById('engagement-rate').textContent = `${engagementRate}%`;
+      
+      // Create engagement distribution chart
+      const engagementData = [
+        { name: 'Case Managed', value: caseManaged },
+        { name: 'Non-Case Managed', value: totalStudents - caseManaged }
+      ];
+      
+      Plotly.newPlot('engagement-chart', [{
+        labels: engagementData.map(d => d.name),
+        values: engagementData.map(d => d.value),
+        type: 'pie',
+        hole: 0.4,
+        marker: {
+          colors: ['#0057B8', '#E31B23']
+        },
+        textinfo: 'label+percent',
+        texttemplate: '%{label}: %{percent}'
+      }], {
+        title: {
+          text: 'Student Engagement Distribution',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 30, l: 30, r: 30 }
+      });
+      
+      // Create service hours trend chart
+      const years = Object.keys(allYearsData).sort().reverse();
+      const serviceHoursByYear = years.map(year => {
+        const yearData = selectedSchool === 'all' 
+          ? allYearsData[year] 
+          : allYearsData[year].filter(item => item['School Name'] === selectedSchool);
+        
+        // Sum up service hours (this is a placeholder - adjust based on actual column names)
+        let totalHours = 0;
+        yearData.forEach(item => {
+          if (item['Service Hours']) totalHours += parseFloat(item['Service Hours']) || 0;
+          if (item['Total Support Hours']) totalHours += parseFloat(item['Total Support Hours']) || 0;
+        });
+        
+        return totalHours;
+      });
+      
+      Plotly.newPlot('service-hours-chart', [{
+        x: years.map(y => y.replace('_', '-')),
+        y: serviceHoursByYear,
+        type: 'bar',
+        marker: {
+          color: '#00A9E0'
+        }
+      }], {
+        title: {
+          text: 'Service Hours by Year',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 50, l: 50, r: 30 },
+        xaxis: {
+          title: 'School Year'
+        },
+        yaxis: {
+          title: 'Total Service Hours'
+        }
+      });
+      
+      // Create risk factors chart
+      // This is a placeholder - adjust based on actual column names
+      const riskFactors = [
+        'Academic Risk', 
+        'Attendance Risk', 
+        'Behavior Risk', 
+        'Social Risk',
+        'Family Risk'
+      ];
+      
+      const riskCounts = riskFactors.map(factor => {
+        return filteredData.filter(item => 
+          item[factor] === 1 || 
+          item[factor] === true || 
+          item[factor] === 'Yes'
+        ).length;
+      });
+      
+      Plotly.newPlot('risk-factors-chart', [{
+        x: riskFactors,
+        y: riskCounts,
+        type: 'bar',
+        marker: {
+          color: '#FFC72C'
+        }
+      }], {
+        title: {
+          text: 'Student Risk Factors',
+          font: { size: 18, color: '#0057B8', family: 'Segoe UI, Arial, sans-serif' }
+        },
+        paper_bgcolor: '#fff',
+        plot_bgcolor: '#fff',
+        margin: { t: 50, b: 50, l: 50, r: 30 },
+        xaxis: {
+          title: 'Risk Factor'
+        },
+        yaxis: {
+          title: 'Number of Students'
+        }
+      });
+    }
+
+    // Initialize the dashboard
+    loadData();
+  </script>
+</body>
+</html>

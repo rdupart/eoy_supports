@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tier Support Activities</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #0057B8;
+      margin-bottom: 20px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+      align-items: center;
+    }
+    label {
+      font-weight: 600;
+      margin-right: 8px;
+      color: #0057B8;
+    }
+    select {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #b0b8c1;
+      background: #fff;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    select:focus {
+      border: 1.5px solid #0057B8;
+      outline: none;
+    }
+    .chart-container {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px rgba(0, 87, 184, 0.07);
+      padding: 20px;
+      margin-bottom: 25px;
+      border-top: 3px solid #0057B8;
+    }
+    .chart-container:hover {
+      box-shadow: 0 6px 24px rgba(0, 87, 184, 0.17);
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <h1>Tier Support Activities Dashboard</h1>
+  
+  <div class="controls">
+    <div>
+      <label for="yearSelect">School Year:</label>
+      <select id="yearSelect" onchange="loadData()">
+        <option value="2023_2024" selected>2023-2024</option>
+        <option value="2022_2023">2022-2023</option>
+        <option value="2021_2022">2021-2022</option>
+        <option value="2020_2021">2020-2021</option>
+        <option value="2019_2020">2019-2020</option>
+      </select>
+    </div>
+    
+    <div>
+      <label for="schoolSelect">School:</label>
+      <select id="schoolSelect" onchange="updateCharts()">
+        <option value="all">All Schools</option>
+      </select>
+    </div>
+    
+    <div>
+      <label for="tierSelect">Support Tier:</label>
+      <select id="tierSelect" onchange="updateCharts()">
+        <option value="all">All Tiers</option>
+        <option value="tier2">Tier II</option>
+        <option value="tier3">Tier III</option>
+      </select>
+    </div>
+    
+    <div>
+      <label for="chartTypeSelect">Chart Type:</label>
+      <select id="chartTypeSelect" onchange="updateCharts()">
+        <option value="pie" selected>Pie Chart</option>
+        <option value="bar">Bar Chart</option>
+      </select>
+    </div>
+  </div>
+  
+  <div id="activities-chart" class="chart-container">
+    <div class="loading">Loading activities data...</div>
+  </div>
+  
+  <div id="categories-chart" class="chart-container">
+    <div class="loading">Loading categories data...</div>
+  </div>
+  
+  <div id="monthly-trend" class="chart-container">
+    <div class="loading">Loading monthly trends...</div>
+  </div>
+  
+  <script>
+    // CSV data URLs
+    const csvUrls = {
+      "2023_2024": 'student_data/CIS_EOY_2023_2024 - Student Data.csv',
+      "2022_2023": 'student_data/CIS_EOY_2022_2023 - Student Data.csv',
+      "2021_2022": 'student_data/CIS_EOY_2021_2022 - Student Data.csv',
+      "2020_2021": 'student_data/CIS_EOY_2020_2021 - Student Data.csv',
+      "2019_2020": 'student_data/CIS_EOY_2019_2020 - Student Data.csv'
+    };
+    
+    let data = [];
+    
+    // Load data based on selected year
+    function loadData() {
+      const yearSelect = document.getElementById('yearSelect');
+      const selectedYear = yearSelect.value;
+      
+      // Show loading indicators
+      document.getElementById('activities-chart').innerHTML = '<div class="loading">Loading activities data...</div>';
+      document.getElementById('categories-chart').innerHTML = '<div class="loading">Loading categories data...</div>';
+      document.getElementById('monthly-trend').innerHTML = '<div class="loading">Loading monthly trends...</div>';
+      
+      // Disable controls during loading
+      document.querySelectorAll('select').forEach(select => select.disabled = true);
+      
+      // Fetch and parse CSV data
+      Papa.parse(csvUrls[selectedYear], {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          data = results.data;
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Populate school dropdown
+          populateSchoolDropdown();
+          
+          // Update charts with new data
+          updateCharts();
+        },
+        error: function(error) {
+          console.error('Error loading CSV:', error);
+          
+          // Re-enable controls
+          document.querySelectorAll('select').forEach(select => select.disabled = false);
+          
+          // Show error message
+          document.getElementById('activities-chart').innerHTML = '<div class="error">Error loading data. Using mock data instead.</div>';
+          document.getElementById('categories-chart').innerHTML = '<div class="error">Error loading data. Using mock data instead.</div>';
+          document.getElementById('monthly-trend').innerHTML = '<div class="error">Error loading data. Using mock data instead.</div>';
+          
+          // Generate mock data for demonstration
+          generateMockData();
+          
+          // Populate school dropdown with mock schools
+          populateSchoolDropdown();
+          
+          // Update charts with mock data
+          updateCharts();
+        }
+      });
+    }
+    
+    // Generate mock data if CSV loading fails
+    function generateMockData() {
+      const schools = ['Lincoln Elementary', 'Washington Middle', 'Jefferson High', 'Roosevelt Academy', 'Kennedy School'];
+      const activities = ['Academic Support', 'Behavioral Support', 'Attendance Support', 'Family Engagement', 'Career Readiness', 'Social Skills', 'Health & Wellness'];
+      const categories = ['Basic Needs', 'Academic', 'Social/Emotional', 'College/Career', 'Family', 'Physical Health', 'Mental Health'];
+      const months = ['September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June'];
+      
+      data = [];
+      
+      // Generate 100 random support activities
+      for (let i = 0; i < 100; i++) {
+        const school = schools[Math.floor(Math.random() * schools.length)];
+        const activity = activities[Math.floor(Math.random() * activities.length)];
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const month = months[Math.floor(Math.random() * months.length)];
+        const tier = Math.random() > 0.3 ? 'Tier II' : 'Tier III';
+        const hours = Math.floor(Math.random() * 10) + 1;
+        
+        data.push({
+          'School': school,
+          'Activity': activity,
+          'Category': category,
+          'Month': month,
+          'Tier': tier,
+          'Hours': hours
+        });
+      }
+    }
+    
+    // Populate school dropdown with unique schools from data
+    function populateSchoolDropdown() {
+      const schoolSelect = document.getElementById('schoolSelect');
+      schoolSelect.innerHTML = '<option value="all">All Schools</option>';
+      
+      // Get unique schools
+      const schools = [...new Set(data.map(item => item.School || item['School']))].filter(Boolean);
+      
+      // Add school options to dropdown
+      schools.forEach(school => {
+        const option = document.createElement('option');
+        option.value = school;
+        option.textContent = school;
+        schoolSelect.appendChild(option);
+      });
+    }
+    
+    // Update charts based on selected filters
+    function updateCharts() {
+      const selectedSchool = document.getElementById('schoolSelect').value;
+      const selectedTier = document.getElementById('tierSelect').value;
+      const chartType = document.getElementById('chartTypeSelect').value;
+      
+      // Filter data based on selections
+      let filteredData = data;
+      
+      if (selectedSchool !== 'all') {
+        filteredData = filteredData.filter(item => (item.School || item['School']) === selectedSchool);
+      }
+      
+      if (selectedTier !== 'all') {
+        const tierFilter = selectedTier === 'tier2' ? 'Tier II' : 'Tier III';
+        filteredData = filteredData.filter(item => (item.Tier || item['Tier']) === tierFilter);
+      }
+      
+      // Activities chart
+      createActivityChart(filteredData, chartType);
+      
+      // Categories chart
+      createCategoryChart(filteredData, chartType);
+      
+      // Monthly trend chart
+      createMonthlyTrendChart(filteredData);
+    }
+    
+    // Create activities chart
+    function createActivityChart(filteredData, chartType) {
+      const activityCounts = {};
+      
+      filteredData.forEach(item => {
+        const activity = item.Activity || item['Activity'];
+        if (!activity) return;
+        
+        const hours = item.Hours || item['Hours'] || 1;
+        activityCounts[activity] = (activityCounts[activity] || 0) + hours;
+      });
+      
+      const activities = Object.keys(activityCounts);
+      const hours = Object.values(activityCounts);
+      
+      if (activities.length === 0) {
+        document.getElementById('activities-chart').innerHTML = '<div class="no-data">No activity data available for the selected filters.</div>';
+        return;
+      }
+      
+      const chartData = chartType === 'pie'
+        ? [{
+            labels: activities,
+            values: hours,
+            type: 'pie',
+            textinfo: 'label+value',
+            texttemplate: '%{label}: %{value} hrs'
+          }]
+        : [{
+            x: activities,
+            y: hours,
+            type: 'bar',
+            marker: {
+              color: '#0057B8'
+            }
+          }];
+      
+      const layout = {
+        title: 'Support Activities by Hours',
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { t: 50, b: 50, l: 50, r: 30 }
+      };
+      
+      Plotly.newPlot('activities-chart', chartData, layout);
+    }
+    
+    // Create categories chart
+    function createCategoryChart(filteredData, chartType) {
+      const categoryCounts = {};
+      
+      filteredData.forEach(item => {
+        const category = item.Category || item['Category'];
+        if (!category) return;
+        
+        const hours = item.Hours || item['Hours'] || 1;
+        categoryCounts[category] = (categoryCounts[category] || 0) + hours;
+      });
+      
+      const categories = Object.keys(categoryCounts);
+      const hours = Object.values(categoryCounts);
+      
+      if (categories.length === 0) {
+        document.getElementById('categories-chart').innerHTML = '<div class="no-data">No category data available for the selected filters.</div>';
+        return;
+      }
+      
+      const chartData = chartType === 'pie'
+        ? [{
+            labels: categories,
+            values: hours,
+            type: 'pie',
+            textinfo: 'label+value',
+            texttemplate: '%{label}: %{value} hrs'
+          }]
+        : [{
+            x: categories,
+            y: hours,
+            type: 'bar',
+            marker: {
+              color: '#E31B23'
+            }
+          }];
+      
+      const layout = {
+        title: 'Support Categories by Hours',
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        margin: { t: 50, b: 50, l: 50, r: 30 }
+      };
+      
+      Plotly.newPlot('categories-chart', chartData, layout);
+    }
+    
+    // Create monthly trend chart
+    function createMonthlyTrendChart(filteredData) {
+      const monthOrder = ['September', 'October', 'November', 'December', 'January', 'February', 'March', 'April', 'May', 'June'];
+      const monthCounts = {};
+      
+      // Initialize all months with zero
+      monthOrder.forEach(month => {
+        monthCounts[month] = 0;
+      });
+      
+      // Count activities by month
+      filteredData.forEach(item => {
+        const month = item.Month || item['Month'];
+        if (!month || !monthOrder.includes(month)) return;
+        
+        const hours = item.Hours || item['Hours'] || 1;
+        monthCounts[month] += hours;
+      });
+      
+      // Sort months in chronological order
+      const months = monthOrder.filter(month => monthCounts[month] > 0);
+      const counts = months.map(month => monthCounts[month]);
+      
+      if (months.length === 0) {
+        document.getElementById('monthly-trend').innerHTML = '<div class="no-data">No monthly data available for the selected filters.</div>';
+        return;
+      }
+      
+      const chartData = [{
+        x: months,
+        y: counts,
+        type: 'scatter',
+        mode: 'lines+markers',
+        marker: {
+          color: '#78BE20',
+          size: 8
+        },
+        line: {
+          color: '#78BE20',
+          width: 3
+        }
+      }];
+      
+      const layout = {
+        title: 'Monthly Support Hours Trend',
+        font: { family: 'Segoe UI, Arial, sans-serif' },
+        xaxis: { title: 'Month' },
+        yaxis: { title: 'Support Hours' },
+        margin: { t: 50, b: 50, l: 50, r: 30 }
+      };
+      
+      Plotly.newPlot('monthly-trend', chartData, layout);
+    }
+    
+    // Load initial data when page loads
+    document.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>
